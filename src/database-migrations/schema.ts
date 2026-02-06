@@ -17,7 +17,6 @@ import {
   inet,
   bigint,
   date,
-  unique,
   integer,
   real,
   geometry
@@ -729,6 +728,24 @@ export const conversations = pgTable(
       withTimezone: true,
       mode: 'string'
     }),
+    rehomerLastReadAt: timestamp('rehomer_last_read_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    adopterLastReadAt: timestamp('adopter_last_read_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    rehomerIsTyping: boolean('rehomer_is_typing').default(false).notNull(),
+    adopterIsTyping: boolean('adopter_is_typing').default(false).notNull(),
+    rehomerLastTypingAt: timestamp('rehomer_last_typing_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    adopterLastTypingAt: timestamp('adopter_last_typing_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
       .defaultNow()
       .notNull(),
@@ -738,6 +755,7 @@ export const conversations = pgTable(
     }),
     adopterId: uuid('adopter_id').notNull(),
     rehomerId: uuid('rehomer_id').notNull(),
+    animalId: uuid('animal_id'),
     conversationId: uuid('conversation_id')
       .defaultRandom()
       .primaryKey()
@@ -753,7 +771,17 @@ export const conversations = pgTable(
       columns: [table.rehomerId],
       foreignColumns: [users.userId],
       name: 'fk_conversations_rehomerid__users'
-    })
+    }),
+    index('conversations_adopter_id_last_message_at_idx').using(
+      'btree',
+      table.adopterId.asc().nullsLast().op('uuid_ops'),
+      table.lastMessageAt.asc().nullsLast().op('timestamptz_ops')
+    ),
+    index('conversations_rehomer_id_last_message_at_idx').using(
+      'btree',
+      table.rehomerId.asc().nullsLast().op('uuid_ops'),
+      table.lastMessageAt.asc().nullsLast().op('timestamptz_ops')
+    )
   ]
 );
 
@@ -799,7 +827,9 @@ export const messages = pgTable(
       .notNull(),
     senderId: uuid('sender_id').notNull(),
     messageId: uuid('message_id').defaultRandom().primaryKey().notNull(),
-    conversationId: uuid('conversation_id').defaultRandom().notNull()
+    conversationId: uuid('conversation_id').defaultRandom().notNull(),
+    isRead: boolean('is_read').default(false).notNull(),
+    readAt: timestamp('read_at', { withTimezone: true, mode: 'string' })
   },
   (table) => [
     foreignKey({
@@ -813,7 +843,17 @@ export const messages = pgTable(
       name: 'messages_conversation_id_fkey'
     })
       .onUpdate('cascade')
-      .onDelete('cascade')
+      .onDelete('cascade'),
+    index('messages_conversation_id_created_at_idx').using(
+      'btree',
+      table.conversationId.asc().nullsLast().op('uuid_ops'),
+      table.createdAt.asc().nullsLast().op('timestamptz_ops')
+    ),
+    index('messages_conversation_id_read_at_idx').using(
+      'btree',
+      table.conversationId.asc().nullsLast().op('uuid_ops'),
+      table.readAt.asc().nullsLast().op('timestamptz_ops')
+    )
   ]
 );
 
@@ -851,35 +891,6 @@ export const animals = pgTable(
   ]
 );
 
-export const animalsAdopted = pgTable(
-  'animals_adopted',
-  {
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
-      .defaultNow()
-      .notNull(),
-    rehomerId: uuid('rehomer_id').notNull(),
-    animalId: uuid('animal_id').defaultRandom().notNull(),
-    animalAdoptionId: uuid('animal_adoption_id')
-      .defaultRandom()
-      .primaryKey()
-      .notNull()
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.animalId],
-      foreignColumns: [animals.animalId],
-      name: 'animals_adopted_animal_id_fkey'
-    })
-      .onUpdate('cascade')
-      .onDelete('cascade'),
-    foreignKey({
-      columns: [table.rehomerId],
-      foreignColumns: [users.userId],
-      name: 'fk_animals_adopted_rehomerid__users'
-    })
-  ]
-);
-
 export const animalPhotos = pgTable(
   'animal_photos',
   {
@@ -899,30 +910,6 @@ export const animalPhotos = pgTable(
     })
       .onUpdate('cascade')
       .onDelete('cascade')
-  ]
-);
-
-export const notifications = pgTable(
-  'notifications',
-  {
-    content: text().notNull(),
-    redirectUrl: text('redirect_url').notNull(),
-    seen: boolean().default(false),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
-      .defaultNow()
-      .notNull(),
-    targetUserId: uuid('target_user_id').notNull(),
-    notificationId: uuid('notification_id')
-      .defaultRandom()
-      .primaryKey()
-      .notNull()
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.targetUserId],
-      foreignColumns: [users.userId],
-      name: 'fk_notifications_users'
-    })
   ]
 );
 

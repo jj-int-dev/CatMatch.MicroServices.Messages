@@ -1,7 +1,10 @@
 -- Current sql file was generated after introspecting the database
 -- If you want to run this migration please uncomment this code before executing migrations
-/*
-CREATE SCHEMA "auth";
+-- This migration is commented out because it was generated from database introspection
+-- and should not be executed as it would recreate existing schema
+-- Uncomment only if you need to recreate the schema from scratch
+-- /*
+-- CREATE SCHEMA "auth";
 --> statement-breakpoint
 CREATE TYPE "auth"."aal_level" AS ENUM('aal1', 'aal2', 'aal3');--> statement-breakpoint
 CREATE TYPE "auth"."code_challenge_method" AS ENUM('s256', 'plain');--> statement-breakpoint
@@ -268,6 +271,8 @@ CREATE TABLE "usertypes" (
 CREATE TABLE "conversations" (
 	"rehomer_last_active_at" timestamp with time zone,
 	"adopter_last_active_at" timestamp with time zone,
+	"rehomer_last_read_at" timestamp with time zone,
+	"adopter_last_read_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"last_message_at" timestamp with time zone,
 	"adopter_id" uuid NOT NULL,
@@ -293,7 +298,8 @@ CREATE TABLE "messages" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"sender_id" uuid NOT NULL,
 	"message_id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"conversation_id" uuid DEFAULT gen_random_uuid() NOT NULL
+	"conversation_id" uuid DEFAULT gen_random_uuid() NOT NULL,
+	"is_read" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "animals" (
@@ -447,4 +453,9 @@ CREATE INDEX "oauth_auth_pending_exp_idx" ON "auth"."oauth_authorizations" USING
 CREATE INDEX "oauth_consents_active_client_idx" ON "auth"."oauth_consents" USING btree ("client_id" uuid_ops) WHERE (revoked_at IS NULL);--> statement-breakpoint
 CREATE INDEX "oauth_consents_active_user_client_idx" ON "auth"."oauth_consents" USING btree ("user_id" uuid_ops,"client_id" uuid_ops) WHERE (revoked_at IS NULL);--> statement-breakpoint
 CREATE INDEX "oauth_consents_user_order_idx" ON "auth"."oauth_consents" USING btree ("user_id" timestamptz_ops,"granted_at" timestamptz_ops);
-*/
+--> statement-breakpoint
+CREATE INDEX "messages_conversation_id_created_at_idx" ON "messages" USING btree ("conversation_id" uuid_ops,"created_at" timestamptz_ops);
+--> statement-breakpoint
+CREATE INDEX "conversations_adopter_id_last_message_at_idx" ON "conversations" USING btree ("adopter_id" uuid_ops,"last_message_at" timestamptz_ops);
+--> statement-breakpoint
+CREATE INDEX "conversations_rehomer_id_last_message_at_idx" ON "conversations" USING btree ("rehomer_id" uuid_ops,"last_message_at" timestamptz_ops);

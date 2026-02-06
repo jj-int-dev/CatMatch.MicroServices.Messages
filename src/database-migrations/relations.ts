@@ -19,9 +19,7 @@ import {
   usertypes,
   messages,
   animals,
-  animalsAdopted,
   animalPhotos,
-  notifications,
   oauthAuthorizationsInAuth,
   oauthConsentsInAuth
 } from './schema';
@@ -185,6 +183,10 @@ export const conversationsRelations = relations(
       references: [users.userId],
       relationName: 'conversations_rehomerId_users_userId'
     }),
+    animal: one(animals, {
+      fields: [conversations.animalId],
+      references: [animals.animalId]
+    }),
     messages: many(messages)
   })
 );
@@ -205,9 +207,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     references: [usertypes.userTypeId]
   }),
   messages: many(messages),
-  animals: many(animals),
-  animalsAdopteds: many(animalsAdopted),
-  notifications: many(notifications)
+  animals: many(animals)
 }));
 
 export const usertypesRelations = relations(usertypes, ({ many }) => ({
@@ -230,32 +230,13 @@ export const animalsRelations = relations(animals, ({ one, many }) => ({
     fields: [animals.rehomerId],
     references: [users.userId]
   }),
-  animalsAdopteds: many(animalsAdopted),
   animalPhotos: many(animalPhotos)
-}));
-
-export const animalsAdoptedRelations = relations(animalsAdopted, ({ one }) => ({
-  animal: one(animals, {
-    fields: [animalsAdopted.animalId],
-    references: [animals.animalId]
-  }),
-  user: one(users, {
-    fields: [animalsAdopted.rehomerId],
-    references: [users.userId]
-  })
 }));
 
 export const animalPhotosRelations = relations(animalPhotos, ({ one }) => ({
   animal: one(animals, {
     fields: [animalPhotos.animalId],
     references: [animals.animalId]
-  })
-}));
-
-export const notificationsRelations = relations(notifications, ({ one }) => ({
-  user: one(users, {
-    fields: [notifications.targetUserId],
-    references: [users.userId]
   })
 }));
 
