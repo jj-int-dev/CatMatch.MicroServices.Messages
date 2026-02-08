@@ -56,6 +56,10 @@ export async function getConversationsCommand(
         c.rehomer_last_active_at AS "rehomerLastActiveAt",
         c.adopter_last_read_at AS "adopterLastReadAt",
         c.rehomer_last_read_at AS "rehomerLastReadAt",
+        c.adopter_is_typing AS "adopterIsTyping",
+        c.rehomer_is_typing AS "rehomerIsTyping",
+        c.adopter_last_typing_at AS "adopterLastTypingAt",
+        c.rehomer_last_typing_at AS "rehomerLastTypingAt",
         json_build_object(
           'userId', ua.user_id,
           'displayName', ua.display_name,
@@ -96,23 +100,49 @@ export async function getConversationsCommand(
     `);
 
     // Transform the result to match our validator
-    const transformedRecords = records.map((record: any) => ({
-      conversationId: record.conversationId,
-      adopterId: record.adopterId,
-      rehomerId: record.rehomerId,
-      animalId: record.animalId,
-      createdAt: record.createdAt,
-      lastMessageAt: record.lastMessageAt,
-      adopterLastActiveAt: record.adopterLastActiveAt,
-      rehomerLastActiveAt: record.rehomerLastActiveAt,
-      adopterLastReadAt: record.adopterLastReadAt,
-      rehomerLastReadAt: record.rehomerLastReadAt,
-      otherUserName: record.otherUser?.displayName || null,
-      otherUserProfilePicture: record.otherUser?.avatarUrl || null,
-      unreadCount: parseInt(record.unreadCount) || 0,
-      animalName: record.animalDetails?.name || null,
-      animalPhoto: record.animalDetails?.photoUrl || null
-    }));
+    // Apply typing indicator expiration logic (indicators older than 10 seconds are stale)
+    const now = new Date();
+    const transformedRecords = records.map((record: any) => {
+      const adopterLastTypingAt = record.adopterLastTypingAt
+        ? new Date(record.adopterLastTypingAt)
+        : null;
+      const rehomerLastTypingAt = record.rehomerLastTypingAt
+        ? new Date(record.rehomerLastTypingAt)
+        : null;
+
+      // Check if typing indicators are stale (> 10 seconds old)
+      const adopterIsTyping =
+        record.adopterIsTyping &&
+        adopterLastTypingAt &&
+        now.getTime() - adopterLastTypingAt.getTime() < 10000;
+
+      const rehomerIsTyping =
+        record.rehomerIsTyping &&
+        rehomerLastTypingAt &&
+        now.getTime() - rehomerLastTypingAt.getTime() < 10000;
+
+      return {
+        conversationId: record.conversationId,
+        adopterId: record.adopterId,
+        rehomerId: record.rehomerId,
+        animalId: record.animalId,
+        createdAt: record.createdAt,
+        lastMessageAt: record.lastMessageAt,
+        adopterLastActiveAt: record.adopterLastActiveAt,
+        rehomerLastActiveAt: record.rehomerLastActiveAt,
+        adopterLastReadAt: record.adopterLastReadAt,
+        rehomerLastReadAt: record.rehomerLastReadAt,
+        adopterIsTyping,
+        rehomerIsTyping,
+        adopterLastTypingAt: record.adopterLastTypingAt,
+        rehomerLastTypingAt: record.rehomerLastTypingAt,
+        otherUserName: record.otherUser?.displayName || null,
+        otherUserProfilePicture: record.otherUser?.avatarUrl || null,
+        unreadCount: parseInt(record.unreadCount) || 0,
+        animalName: record.animalDetails?.name || null,
+        animalPhoto: record.animalDetails?.photoUrl || null
+      };
+    });
 
     const validationResult =
       conversationsValidator.safeParse(transformedRecords);

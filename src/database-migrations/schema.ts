@@ -1,13 +1,13 @@
 import {
   pgTable,
   pgSchema,
-  uniqueIndex,
   index,
-  foreignKey,
   check,
   uuid,
   text,
   timestamp,
+  uniqueIndex,
+  foreignKey,
   jsonb,
   boolean,
   varchar,
@@ -17,11 +17,12 @@ import {
   inet,
   bigint,
   date,
-  integer,
   real,
+  integer,
   geometry
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import { authUsers } from 'drizzle-orm/supabase';
 
 export const auth = pgSchema('auth');
 export const aalLevelInAuth = auth.enum('aal_level', ['aal1', 'aal2', 'aal3']);
@@ -62,30 +63,6 @@ export const oneTimeTokenTypeInAuth = auth.enum('one_time_token_type', [
   'phone_change_token'
 ]);
 
-export const ssoDomainsInAuth = auth.table(
-  'sso_domains',
-  {
-    id: uuid().notNull(),
-    ssoProviderId: uuid('sso_provider_id').notNull(),
-    domain: text().notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }),
-    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
-  },
-  (table) => [
-    uniqueIndex('sso_domains_domain_idx').using('btree', sql`lower(domain)`),
-    index('sso_domains_sso_provider_id_idx').using(
-      'btree',
-      table.ssoProviderId.asc().nullsLast().op('uuid_ops')
-    ),
-    foreignKey({
-      columns: [table.ssoProviderId],
-      foreignColumns: [ssoProvidersInAuth.id],
-      name: 'sso_domains_sso_provider_id_fkey'
-    }).onDelete('cascade'),
-    check('domain not empty', sql`char_length(domain) > 0`)
-  ]
-);
-
 export const oauthClientsInAuth = auth.table(
   'oauth_clients',
   {
@@ -107,7 +84,8 @@ export const oauthClientsInAuth = auth.table(
     deletedAt: timestamp('deleted_at', { withTimezone: true, mode: 'string' }),
     clientType: oauthClientTypeInAuth('client_type')
       .default('confidential')
-      .notNull()
+      .notNull(),
+    tokenEndpointAuthMethod: text('token_endpoint_auth_method').notNull()
   },
   (table) => [
     index('oauth_clients_deleted_at_idx').using(
@@ -122,7 +100,35 @@ export const oauthClientsInAuth = auth.table(
       'oauth_clients_client_uri_length',
       sql`char_length(client_uri) <= 2048`
     ),
-    check('oauth_clients_logo_uri_length', sql`char_length(logo_uri) <= 2048`)
+    check('oauth_clients_logo_uri_length', sql`char_length(logo_uri) <= 2048`),
+    check(
+      'oauth_clients_token_endpoint_auth_method_check',
+      sql`token_endpoint_auth_method = ANY (ARRAY['client_secret_basic'::text, 'client_secret_post'::text, 'none'::text])`
+    )
+  ]
+);
+
+export const ssoDomainsInAuth = auth.table(
+  'sso_domains',
+  {
+    id: uuid().notNull(),
+    ssoProviderId: uuid('sso_provider_id').notNull(),
+    domain: text().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }),
+    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' })
+  },
+  (table) => [
+    uniqueIndex('sso_domains_domain_idx').using('btree', sql`lower(domain)`),
+    index('sso_domains_sso_provider_id_idx').using(
+      'btree',
+      table.ssoProviderId.asc().nullsLast().op('uuid_ops')
+    ),
+    foreignKey({
+      columns: [table.ssoProviderId],
+      foreignColumns: [ssoProvidersInAuth.id],
+      name: 'sso_domains_sso_provider_id_fkey'
+    }).onDelete('cascade'),
+    check('domain not empty', sql`char_length(domain) > 0`)
   ]
 );
 
@@ -519,44 +525,6 @@ export const mfaAmrClaimsInAuth = auth.table(
   ]
 );
 
-export const flowStateInAuth = auth.table(
-  'flow_state',
-  {
-    id: uuid().notNull(),
-    userId: uuid('user_id'),
-    authCode: text('auth_code').notNull(),
-    codeChallengeMethod: codeChallengeMethodInAuth(
-      'code_challenge_method'
-    ).notNull(),
-    codeChallenge: text('code_challenge').notNull(),
-    providerType: text('provider_type').notNull(),
-    providerAccessToken: text('provider_access_token'),
-    providerRefreshToken: text('provider_refresh_token'),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }),
-    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
-    authenticationMethod: text('authentication_method').notNull(),
-    authCodeIssuedAt: timestamp('auth_code_issued_at', {
-      withTimezone: true,
-      mode: 'string'
-    })
-  },
-  (table) => [
-    index('flow_state_created_at_idx').using(
-      'btree',
-      table.createdAt.desc().nullsFirst().op('timestamptz_ops')
-    ),
-    index('idx_auth_code').using(
-      'btree',
-      table.authCode.asc().nullsLast().op('text_ops')
-    ),
-    index('idx_user_id_auth_method').using(
-      'btree',
-      table.userId.asc().nullsLast().op('uuid_ops'),
-      table.authenticationMethod.asc().nullsLast().op('uuid_ops')
-    )
-  ]
-);
-
 export const identitiesInAuth = auth.table(
   'identities',
   {
@@ -660,6 +628,47 @@ export const mfaChallengesInAuth = auth.table(
   ]
 );
 
+export const flowStateInAuth = auth.table(
+  'flow_state',
+  {
+    id: uuid().notNull(),
+    userId: uuid('user_id'),
+    authCode: text('auth_code'),
+    codeChallengeMethod: codeChallengeMethodInAuth('code_challenge_method'),
+    codeChallenge: text('code_challenge'),
+    providerType: text('provider_type').notNull(),
+    providerAccessToken: text('provider_access_token'),
+    providerRefreshToken: text('provider_refresh_token'),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }),
+    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }),
+    authenticationMethod: text('authentication_method').notNull(),
+    authCodeIssuedAt: timestamp('auth_code_issued_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    inviteToken: text('invite_token'),
+    referrer: text(),
+    oauthClientStateId: uuid('oauth_client_state_id'),
+    linkingTargetId: uuid('linking_target_id'),
+    emailOptional: boolean('email_optional').default(false).notNull()
+  },
+  (table) => [
+    index('flow_state_created_at_idx').using(
+      'btree',
+      table.createdAt.desc().nullsFirst().op('timestamptz_ops')
+    ),
+    index('idx_auth_code').using(
+      'btree',
+      table.authCode.asc().nullsLast().op('text_ops')
+    ),
+    index('idx_user_id_auth_method').using(
+      'btree',
+      table.userId.asc().nullsLast().op('uuid_ops'),
+      table.authenticationMethod.asc().nullsLast().op('uuid_ops')
+    )
+  ]
+);
+
 export const sessionsInAuth = auth.table(
   'sessions',
   {
@@ -717,74 +726,6 @@ export const usertypes = pgTable('usertypes', {
   userTypeId: uuid('user_type_id').defaultRandom().primaryKey().notNull()
 });
 
-export const conversations = pgTable(
-  'conversations',
-  {
-    rehomerLastActiveAt: timestamp('rehomer_last_active_at', {
-      withTimezone: true,
-      mode: 'string'
-    }),
-    adopterLastActiveAt: timestamp('adopter_last_active_at', {
-      withTimezone: true,
-      mode: 'string'
-    }),
-    rehomerLastReadAt: timestamp('rehomer_last_read_at', {
-      withTimezone: true,
-      mode: 'string'
-    }),
-    adopterLastReadAt: timestamp('adopter_last_read_at', {
-      withTimezone: true,
-      mode: 'string'
-    }),
-    rehomerIsTyping: boolean('rehomer_is_typing').default(false).notNull(),
-    adopterIsTyping: boolean('adopter_is_typing').default(false).notNull(),
-    rehomerLastTypingAt: timestamp('rehomer_last_typing_at', {
-      withTimezone: true,
-      mode: 'string'
-    }),
-    adopterLastTypingAt: timestamp('adopter_last_typing_at', {
-      withTimezone: true,
-      mode: 'string'
-    }),
-    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
-      .defaultNow()
-      .notNull(),
-    lastMessageAt: timestamp('last_message_at', {
-      withTimezone: true,
-      mode: 'string'
-    }),
-    adopterId: uuid('adopter_id').notNull(),
-    rehomerId: uuid('rehomer_id').notNull(),
-    animalId: uuid('animal_id'),
-    conversationId: uuid('conversation_id')
-      .defaultRandom()
-      .primaryKey()
-      .notNull()
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.adopterId],
-      foreignColumns: [users.userId],
-      name: 'fk_conversations_adopterid_users'
-    }),
-    foreignKey({
-      columns: [table.rehomerId],
-      foreignColumns: [users.userId],
-      name: 'fk_conversations_rehomerid__users'
-    }),
-    index('conversations_adopter_id_last_message_at_idx').using(
-      'btree',
-      table.adopterId.asc().nullsLast().op('uuid_ops'),
-      table.lastMessageAt.asc().nullsLast().op('timestamptz_ops')
-    ),
-    index('conversations_rehomer_id_last_message_at_idx').using(
-      'btree',
-      table.rehomerId.asc().nullsLast().op('uuid_ops'),
-      table.lastMessageAt.asc().nullsLast().op('timestamptz_ops')
-    )
-  ]
-);
-
 export const users = pgTable(
   'users',
   {
@@ -805,7 +746,7 @@ export const users = pgTable(
   (table) => [
     foreignKey({
       columns: [table.userId],
-      foreignColumns: [usersInAuth.id],
+      foreignColumns: [authUsers.id],
       name: 'users_user_id_fkey'
     })
       .onUpdate('cascade')
@@ -815,6 +756,101 @@ export const users = pgTable(
       foreignColumns: [usertypes.userTypeId],
       name: 'users_user_type_id_fkey'
     }).onUpdate('cascade')
+  ]
+);
+
+export const conversations = pgTable(
+  'conversations',
+  {
+    rehomerLastActiveAt: timestamp('rehomer_last_active_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    adopterLastActiveAt: timestamp('adopter_last_active_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+      .defaultNow()
+      .notNull(),
+    lastMessageAt: timestamp('last_message_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    adopterId: uuid('adopter_id').notNull(),
+    rehomerId: uuid('rehomer_id').notNull(),
+    conversationId: uuid('conversation_id')
+      .defaultRandom()
+      .primaryKey()
+      .notNull(),
+    rehomerLastReadAt: timestamp('rehomer_last_read_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    adopterLastReadAt: timestamp('adopter_last_read_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    animalId: uuid('animal_id').defaultRandom().notNull(),
+    adopterIsTyping: boolean('adopter_is_typing').default(false).notNull(),
+    rehomerIsTyping: boolean('rehomer_is_typing').default(false).notNull(),
+    adopterLastTypingAt: timestamp('adopter_last_typing_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    rehomerLastTypingAt: timestamp('rehomer_last_typing_at', {
+      withTimezone: true,
+      mode: 'string'
+    })
+  },
+  (table) => [
+    index('conversations_adopter_id_last_message_at_idx').using(
+      'btree',
+      table.adopterId.asc().nullsLast().op('timestamptz_ops'),
+      table.lastMessageAt.asc().nullsLast().op('uuid_ops')
+    ),
+    index('conversations_rehomer_id_last_message_at_idx').using(
+      'btree',
+      table.rehomerId.asc().nullsLast().op('timestamptz_ops'),
+      table.lastMessageAt.asc().nullsLast().op('timestamptz_ops')
+    ),
+    index('idx_conversations_adopter').using(
+      'btree',
+      table.adopterId.asc().nullsLast().op('uuid_ops'),
+      table.lastMessageAt.desc().nullsLast().op('uuid_ops')
+    ),
+    index('idx_conversations_last_message').using(
+      'btree',
+      table.lastMessageAt.desc().nullsLast().op('timestamptz_ops'),
+      table.createdAt.desc().nullsFirst().op('timestamptz_ops')
+    ),
+    index('idx_conversations_rehomer').using(
+      'btree',
+      table.rehomerId.asc().nullsLast().op('uuid_ops'),
+      table.lastMessageAt.desc().nullsLast().op('uuid_ops')
+    ),
+    index('idx_conversations_typing_status').using(
+      'btree',
+      table.adopterIsTyping.asc().nullsLast().op('bool_ops'),
+      table.rehomerIsTyping.asc().nullsLast().op('bool_ops')
+    ),
+    foreignKey({
+      columns: [table.animalId],
+      foreignColumns: [animals.animalId],
+      name: 'conversations_animal_id_fkey'
+    })
+      .onUpdate('cascade')
+      .onDelete('cascade'),
+    foreignKey({
+      columns: [table.adopterId],
+      foreignColumns: [users.userId],
+      name: 'fk_conversations_adopterid_users'
+    }),
+    foreignKey({
+      columns: [table.rehomerId],
+      foreignColumns: [users.userId],
+      name: 'fk_conversations_rehomerid__users'
+    })
   ]
 );
 
@@ -832,6 +868,27 @@ export const messages = pgTable(
     readAt: timestamp('read_at', { withTimezone: true, mode: 'string' })
   },
   (table) => [
+    index('idx_messages_conversation_created').using(
+      'btree',
+      table.conversationId.asc().nullsLast().op('uuid_ops'),
+      table.createdAt.desc().nullsFirst().op('uuid_ops')
+    ),
+    index('idx_messages_conversation_unread')
+      .using(
+        'btree',
+        table.conversationId.asc().nullsLast().op('bool_ops'),
+        table.isRead.asc().nullsLast().op('bool_ops'),
+        table.senderId.asc().nullsLast().op('bool_ops')
+      )
+      .where(sql`(is_read = false)`),
+    index('idx_messages_read_at')
+      .using('btree', table.readAt.asc().nullsLast().op('timestamptz_ops'))
+      .where(sql`(read_at IS NOT NULL)`),
+    index('messages_conversation_id_created_at_idx').using(
+      'btree',
+      table.conversationId.asc().nullsLast().op('timestamptz_ops'),
+      table.createdAt.asc().nullsLast().op('uuid_ops')
+    ),
     foreignKey({
       columns: [table.senderId],
       foreignColumns: [users.userId],
@@ -843,17 +900,7 @@ export const messages = pgTable(
       name: 'messages_conversation_id_fkey'
     })
       .onUpdate('cascade')
-      .onDelete('cascade'),
-    index('messages_conversation_id_created_at_idx').using(
-      'btree',
-      table.conversationId.asc().nullsLast().op('uuid_ops'),
-      table.createdAt.asc().nullsLast().op('timestamptz_ops')
-    ),
-    index('messages_conversation_id_read_at_idx').using(
-      'btree',
-      table.conversationId.asc().nullsLast().op('uuid_ops'),
-      table.readAt.asc().nullsLast().op('timestamptz_ops')
-    )
+      .onDelete('cascade')
   ]
 );
 

@@ -60,6 +60,7 @@ export async function createConversationCommand(
       .values({
         adopterId,
         rehomerId,
+        animalId: animalId || null,
         adopterLastActiveAt: sql`NOW()`,
         rehomerLastActiveAt: sql`NOW()`,
         lastMessageAt: null

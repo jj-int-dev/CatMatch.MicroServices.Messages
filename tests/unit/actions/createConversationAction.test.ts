@@ -5,13 +5,23 @@ vi.mock('../../../src/commands/createConversationCommand', () => ({
   createConversationCommand: vi.fn()
 }));
 
+// Mock the user role validator
+vi.mock('../../../src/validators/userRoleValidator', () => ({
+  validateConversationParticipants: vi.fn()
+}));
+
 import { createConversationAction } from '../../../src/actions/createConversationAction';
 import { createConversationCommand } from '../../../src/commands/createConversationCommand';
+import { validateConversationParticipants } from '../../../src/validators/userRoleValidator';
 import HttpResponseError from '../../../src/dtos/httpResponseError';
 
 describe('createConversationAction', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock successful validation by default
+    vi.mocked(validateConversationParticipants).mockResolvedValue({
+      valid: true
+    });
   });
 
   it('should create conversation successfully', async () => {
@@ -30,6 +40,10 @@ describe('createConversationAction', () => {
       rehomerLastActiveAt: '2026-06-01T10:00:00.000Z',
       adopterLastReadAt: null,
       rehomerLastReadAt: null,
+      adopterIsTyping: false,
+      rehomerIsTyping: false,
+      adopterLastTypingAt: null,
+      rehomerLastTypingAt: null,
       otherUserName: null,
       otherUserProfilePicture: null,
       unreadCount: 0,

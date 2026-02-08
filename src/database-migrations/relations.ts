@@ -15,10 +15,10 @@ import {
   mfaChallengesInAuth,
   oauthClientsInAuth,
   users,
-  conversations,
   usertypes,
-  messages,
   animals,
+  conversations,
+  messages,
   animalPhotos,
   oauthAuthorizationsInAuth,
   oauthConsentsInAuth
@@ -170,9 +170,36 @@ export const oauthClientsInAuthRelations = relations(
   })
 );
 
+export const usersRelations = relations(users, ({ one, many }) => ({
+  usersInAuth: one(usersInAuth, {
+    fields: [users.userId],
+    references: [usersInAuth.id]
+  }),
+  usertype: one(usertypes, {
+    fields: [users.userTypeId],
+    references: [usertypes.userTypeId]
+  }),
+  conversations_adopterId: many(conversations, {
+    relationName: 'conversations_adopterId_users_userId'
+  }),
+  conversations_rehomerId: many(conversations, {
+    relationName: 'conversations_rehomerId_users_userId'
+  }),
+  messages: many(messages),
+  animals: many(animals)
+}));
+
+export const usertypesRelations = relations(usertypes, ({ many }) => ({
+  users: many(users)
+}));
+
 export const conversationsRelations = relations(
   conversations,
   ({ one, many }) => ({
+    animal: one(animals, {
+      fields: [conversations.animalId],
+      references: [animals.animalId]
+    }),
     user_adopterId: one(users, {
       fields: [conversations.adopterId],
       references: [users.userId],
@@ -183,35 +210,17 @@ export const conversationsRelations = relations(
       references: [users.userId],
       relationName: 'conversations_rehomerId_users_userId'
     }),
-    animal: one(animals, {
-      fields: [conversations.animalId],
-      references: [animals.animalId]
-    }),
     messages: many(messages)
   })
 );
 
-export const usersRelations = relations(users, ({ one, many }) => ({
-  conversations_adopterId: many(conversations, {
-    relationName: 'conversations_adopterId_users_userId'
+export const animalsRelations = relations(animals, ({ one, many }) => ({
+  conversations: many(conversations),
+  user: one(users, {
+    fields: [animals.rehomerId],
+    references: [users.userId]
   }),
-  conversations_rehomerId: many(conversations, {
-    relationName: 'conversations_rehomerId_users_userId'
-  }),
-  usersInAuth: one(usersInAuth, {
-    fields: [users.userId],
-    references: [usersInAuth.id]
-  }),
-  usertype: one(usertypes, {
-    fields: [users.userTypeId],
-    references: [usertypes.userTypeId]
-  }),
-  messages: many(messages),
-  animals: many(animals)
-}));
-
-export const usertypesRelations = relations(usertypes, ({ many }) => ({
-  users: many(users)
+  animalPhotos: many(animalPhotos)
 }));
 
 export const messagesRelations = relations(messages, ({ one }) => ({
@@ -223,14 +232,6 @@ export const messagesRelations = relations(messages, ({ one }) => ({
     fields: [messages.conversationId],
     references: [conversations.conversationId]
   })
-}));
-
-export const animalsRelations = relations(animals, ({ one, many }) => ({
-  user: one(users, {
-    fields: [animals.rehomerId],
-    references: [users.userId]
-  }),
-  animalPhotos: many(animalPhotos)
 }));
 
 export const animalPhotosRelations = relations(animalPhotos, ({ one }) => ({

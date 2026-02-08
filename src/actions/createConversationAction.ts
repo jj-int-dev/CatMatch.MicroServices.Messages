@@ -1,6 +1,7 @@
 import { createConversationCommand } from '../commands/createConversationCommand';
 import type { ConversationSchema } from '../validators/database/conversationsValidator';
 import HttpResponseError from '../dtos/httpResponseError';
+import { validateConversationParticipants } from '../validators/userRoleValidator';
 
 export type CreateConversationActionResponse = Promise<{
   conversation: ConversationSchema;
@@ -21,11 +22,24 @@ export async function createConversationAction(
 ): CreateConversationActionResponse {
   console.log('Entering CreateConversationAction ...');
 
-  // Note: In a real implementation, we would validate that:
-  // 1. adopterId is actually an adopter (user type check)
-  // 2. rehomerId is actually a rehomer (user type check)
-  // 3. animalId belongs to rehomerId (if provided)
-  // For now, we'll assume these validations happen at the route level
+  // Validate that adopterId is actually an adopter and rehomerId is a rehomer
+  const validation = await validateConversationParticipants(
+    adopterId,
+    rehomerId
+  );
+
+  if (!validation.valid) {
+    console.error(
+      `Role validation failed: ${validation.error}\nExiting CreateConversationAction ...`
+    );
+    throw new HttpResponseError(
+      403,
+      validation.error || 'Invalid user roles for conversation creation'
+    );
+  }
+
+  // TODO: Validate that animalId belongs to rehomerId (if provided)
+  // This would require querying the animals table to check ownership
 
   const { success, data, errorMsg } = await createConversationCommand(
     adopterId,

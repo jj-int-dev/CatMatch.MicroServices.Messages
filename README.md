@@ -102,14 +102,14 @@ http://localhost:3000/api-docs
 
 ### Main Endpoints
 
-- `POST /api/messages/conversations` - Create a new conversation
-- `GET /api/messages/conversations` - Get user's conversations
-- `POST /api/messages` - Send a message
-- `GET /api/messages` - Get messages in a conversation
-- `PATCH /api/messages/read` - Mark messages as read
-- `POST /api/messages/typing` - Update typing status
-- `GET /api/messages/unread-count` - Get unread message count
-- `DELETE /api/messages/conversations/:userId` - Delete user conversations
+- `POST /api/messages/:userId/conversations` - Create a new conversation
+- `GET /api/messages/:userId/conversations` - Get user's conversations
+- `POST /api/messages/:userId/conversations/:conversationId/messages` - Send a message
+- `GET /api/messages/:userId/conversations/:conversationId/messages` - Get messages in a conversation
+- `PUT /api/messages/:userId/conversations/:conversationId/read` - Mark messages as read
+- `POST /api/messages/:userId/conversations/:conversationId/typing` - Update typing status
+- `GET /api/messages/:userId/unread-count` - Get unread message count
+- `DELETE /api/messages/:userId/conversations` - Delete user conversations
 
 ## Project Structure
 
