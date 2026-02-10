@@ -16,27 +16,28 @@ export type CreateConversationCommandResponse = Promise<{
  * Creates a new conversation between an adopter and a rehomer
  * @param adopterId The ID of the adopter (must be an adopter user type)
  * @param rehomerId The ID of the rehomer (must be a rehomer user type)
- * @param animalId Optional animal ID associated with the conversation
+ * @param animalId The animal ID associated with the conversation
  * @returns A {@link CreateConversationCommandResponse}
  */
 export async function createConversationCommand(
   adopterId: string,
   rehomerId: string,
-  animalId?: string
+  animalId: string
 ): CreateConversationCommandResponse {
   try {
     // Check if users exist and have correct user types
     // Note: In a real implementation, we would check user types from the users table
     // For now, we'll assume the validation happens at the action level
 
-    // Check if conversation already exists between these users
+    // Check if conversation already exists between these users for this animal
     const existingConversations = await db
       .select()
       .from(conversations)
       .where(
         and(
           eq(conversations.adopterId, adopterId),
-          eq(conversations.rehomerId, rehomerId)
+          eq(conversations.rehomerId, rehomerId),
+          eq(conversations.animalId, animalId)
         )
       )
       .limit(1);
@@ -60,7 +61,7 @@ export async function createConversationCommand(
       .values({
         adopterId,
         rehomerId,
-        animalId: animalId || null,
+        animalId,
         adopterLastActiveAt: sql`NOW()`,
         rehomerLastActiveAt: sql`NOW()`,
         lastMessageAt: null

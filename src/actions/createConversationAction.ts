@@ -11,14 +11,14 @@ export type CreateConversationActionResponse = Promise<{
  * Creates a new conversation between an adopter and a rehomer
  * @param adopterId The ID of the adopter (must be an adopter user type)
  * @param rehomerId The ID of the rehomer (must be a rehomer user type)
- * @param animalId Optional animal ID associated with the conversation
+ * @param animalId animal ID associated with the conversation
  * @returns A {@link CreateConversationActionResponse} containing the created conversation
  * @throws A {@link HttpResponseError} If an error occurred while creating the conversation
  */
 export async function createConversationAction(
   adopterId: string,
   rehomerId: string,
-  animalId?: string
+  animalId: string
 ): CreateConversationActionResponse {
   console.log('Entering CreateConversationAction ...');
 

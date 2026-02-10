@@ -3,7 +3,7 @@ import * as z from 'zod';
 
 const createConversationValidations = z.object({
   rehomerId: z.string().uuid('Rehomer ID must be a valid UUID'),
-  animalId: z.string().uuid('Animal ID must be a valid UUID').optional()
+  animalId: z.string().uuid('Animal ID must be a valid UUID')
 });
 
 export type CreateConversationSchema = z.infer<
