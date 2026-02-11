@@ -260,7 +260,7 @@ const router = Router();
  *               $ref: '#/components/schemas/Error'
  */
 router.post(
-  ':userId/conversations',
+  '/:userId/conversations',
   isAuthorized,
   userIdValidator,
   createConversationValidator,
@@ -356,7 +356,7 @@ router.post(
  *               $ref: '#/components/schemas/Error'
  */
 router.post(
-  ':userId/conversations/:conversationId/messages',
+  '/:userId/conversations/:conversationId/messages',
   isAuthorized,
   conversationIdValidator,
   userIdValidator,
@@ -460,7 +460,7 @@ router.post(
  *               $ref: '#/components/schemas/Error'
  */
 router.get(
-  ':userId/conversations',
+  '/:userId/conversations',
   isAuthorized,
   userIdValidator,
   paginationValidator,
@@ -581,7 +581,7 @@ router.get(
  *               $ref: '#/components/schemas/Error'
  */
 router.get(
-  ':userId/conversations/:conversationId/messages',
+  '/:userId/conversations/:conversationId/messages',
   isAuthorized,
   conversationIdValidator,
   userIdValidator,
@@ -675,7 +675,7 @@ router.get(
  *               $ref: '#/components/schemas/Error'
  */
 router.put(
-  ':userId/conversations/:conversationId/read',
+  '/:userId/conversations/:conversationId/read',
   isAuthorized,
   conversationIdValidator,
   userIdValidator,
@@ -779,7 +779,7 @@ router.put(
  *               $ref: '#/components/schemas/Error'
  */
 router.put(
-  ':userId/conversations/:conversationId/typing',
+  '/:userId/conversations/:conversationId/typing',
   isAuthorized,
   conversationIdValidator,
   userIdValidator,
@@ -852,7 +852,7 @@ router.put(
  *               $ref: '#/components/schemas/Error'
  */
 router.get(
-  ':userId/unread-count',
+  '/:userId/unread-count',
   isAuthorized,
   userIdValidator,
   async (req: Request, res: Response) => {
@@ -908,7 +908,7 @@ router.get(
  *               $ref: '#/components/schemas/Error'
  */
 router.delete(
-  ':userId/conversations',
+  '/:userId/conversations',
   isAuthorized,
   userIdValidator,
   async (req: Request, res: Response) => {
