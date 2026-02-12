@@ -1,5 +1,5 @@
 import { createConversationCommand } from '../commands/createConversationCommand';
-import type { ConversationSchema } from '../validators/database/conversationsValidator';
+import type { ConversationSchema } from '../validators/database/getConversationValidator';
 import HttpResponseError from '../dtos/httpResponseError';
 import { validateConversationParticipants } from '../validators/userRoleValidator';
 

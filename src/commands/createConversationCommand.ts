@@ -2,13 +2,13 @@ import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../utils/databaseClient';
 import { conversations } from '../database-migrations/schema';
 import {
-  conversationValidator,
-  type ConversationSchema
-} from '../validators/database/conversationsValidator';
+  createConversationValidator,
+  type NewConversationSchema
+} from '../validators/database/createConversationValidator';
 
 export type CreateConversationCommandResponse = Promise<{
   success: boolean;
-  data?: ConversationSchema;
+  data?: NewConversationSchema;
   errorMsg?: string;
 }>;
 
@@ -43,7 +43,7 @@ export async function createConversationCommand(
       .limit(1);
 
     if (existingConversations.length > 0) {
-      const validationResult = conversationValidator.safeParse(
+      const validationResult = createConversationValidator.safeParse(
         existingConversations[0]
       );
 
@@ -67,8 +67,7 @@ export async function createConversationCommand(
         lastMessageAt: null
       })
       .returning();
-
-    const validationResult = conversationValidator.safeParse(
+    const validationResult = createConversationValidator.safeParse(
       newConversation[0]
     );
 

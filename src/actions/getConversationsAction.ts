@@ -1,5 +1,5 @@
 import { getConversationsCommand } from '../commands/getConversationsCommand';
-import type { ConversationsSchema } from '../validators/database/conversationsValidator';
+import type { ConversationsSchema } from '../validators/database/getConversationValidator';
 import HttpResponseError from '../dtos/httpResponseError';
 
 export type GetConversationsActionResponse = Promise<{
@@ -51,7 +51,7 @@ export async function getConversationsAction(
         totalResults: totalResults || 0,
         page: resultPage || page,
         pageSize: resultPageSize || pageSize,
-        totalPages
+        totalPages: totalPages || 1
       }
     };
   }

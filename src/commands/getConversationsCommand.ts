@@ -2,9 +2,9 @@ import { eq, or, sql } from 'drizzle-orm';
 import { db } from '../utils/databaseClient';
 import { conversations } from '../database-migrations/schema';
 import {
-  conversationsValidator,
+  getConversationsValidator,
   type ConversationsSchema
-} from '../validators/database/conversationsValidator';
+} from '../validators/database/getConversationValidator';
 
 export type GetConversationsCommandResponse = Promise<{
   success: boolean;
@@ -145,7 +145,7 @@ export async function getConversationsCommand(
     });
 
     const validationResult =
-      conversationsValidator.safeParse(transformedRecords);
+      getConversationsValidator.safeParse(transformedRecords);
 
     if (validationResult.success) {
       return {
