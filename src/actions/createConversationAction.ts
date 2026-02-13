@@ -1,10 +1,10 @@
 import { createConversationCommand } from '../commands/createConversationCommand';
-import type { ConversationSchema } from '../validators/database/getConversationValidator';
+import type { NewConversationSchema } from '../validators/database/createConversationValidator';
 import HttpResponseError from '../dtos/httpResponseError';
 import { validateConversationParticipants } from '../validators/userRoleValidator';
 
 export type CreateConversationActionResponse = Promise<{
-  conversation: ConversationSchema;
+  conversation: NewConversationSchema;
 }>;
 
 /**
