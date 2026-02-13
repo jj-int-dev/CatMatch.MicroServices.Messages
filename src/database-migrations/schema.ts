@@ -801,6 +801,14 @@ export const conversations = pgTable(
     rehomerLastTypingAt: timestamp('rehomer_last_typing_at', {
       withTimezone: true,
       mode: 'string'
+    }),
+    adopterDeletedAt: timestamp('adopter_deleted_at', {
+      withTimezone: true,
+      mode: 'string'
+    }),
+    rehomerDeletedAt: timestamp('rehomer_deleted_at', {
+      withTimezone: true,
+      mode: 'string'
     })
   },
   (table) => [

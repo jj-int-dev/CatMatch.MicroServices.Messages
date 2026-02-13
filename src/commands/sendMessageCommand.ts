@@ -73,8 +73,19 @@ export async function sendMessageCommand(
     // Update last active timestamp for the sender
     if (senderId === conv.adopterId) {
       updateFields.adopterLastActiveAt = sql`NOW()`;
+      // Clear sender's deleted_at if they previously deleted the conversation
+      updateFields.adopterDeletedAt = null;
     } else {
       updateFields.rehomerLastActiveAt = sql`NOW()`;
+      // Clear sender's deleted_at if they previously deleted the conversation
+      updateFields.rehomerDeletedAt = null;
+    }
+
+    // Clear recipient's deleted_at to restore conversation for them
+    if (senderId === conv.adopterId) {
+      updateFields.rehomerDeletedAt = null;
+    } else {
+      updateFields.adopterDeletedAt = null;
     }
 
     await db

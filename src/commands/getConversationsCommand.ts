@@ -94,7 +94,11 @@ export async function getConversationsCommand(
           ELSE c.adopter_id = ua.user_id
         END
       )
-      WHERE c.adopter_id = ${userId} OR c.rehomer_id = ${userId}
+      WHERE (c.adopter_id = ${userId} OR c.rehomer_id = ${userId})
+        AND (
+          (c.adopter_id = ${userId} AND c.adopter_deleted_at IS NULL) OR
+          (c.rehomer_id = ${userId} AND c.rehomer_deleted_at IS NULL)
+        )
       ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
       LIMIT ${pageSize} OFFSET ${offset};
     `);

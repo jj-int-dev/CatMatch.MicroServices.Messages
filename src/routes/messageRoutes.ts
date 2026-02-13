@@ -15,6 +15,7 @@ import { markAsReadAction } from '../actions/markAsReadAction';
 import { setTypingStatusAction } from '../actions/setTypingStatusAction';
 import { getUnreadMessagesCountAction } from '../actions/getUnreadMessagesCountAction';
 import { deleteConversationsForUserAction } from '../actions/deleteConversationsForUserAction';
+import { deleteConversationAction } from '../actions/deleteConversationAction';
 
 /**
  * @swagger
@@ -859,6 +860,107 @@ router.get(
     try {
       const { userId } = req.params;
       const result = await getUnreadMessagesCountAction(userId as string);
+      return res.status(200).json(result);
+    } catch (error) {
+      return getErrorResponseJson(error, res);
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/messages/{userId}/conversations/{conversationId}:
+ *   delete:
+ *     summary: Delete a conversation (WhatsApp-style)
+ *     description: Soft deletes a conversation for the authenticated user. The conversation will disappear from their UI but remain visible to the other participant. If both users delete the conversation, it will be permanently removed from the database along with all messages (cascade delete).
+ *     tags:
+ *       - Conversations
+ *     security:
+ *       - BearerAuth: []
+ *       - RefreshToken: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: User ID deleting the conversation (must match authenticated user)
+ *       - in: path
+ *         name: conversationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID of the conversation to delete
+ *     responses:
+ *       200:
+ *         description: Conversation deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates whether the operation was successful
+ *                 hardDeleted:
+ *                   type: boolean
+ *                   description: True if conversation was permanently deleted (both users deleted), false if soft deleted for this user only
+ *             examples:
+ *               softDelete:
+ *                 summary: Soft deleted for one user
+ *                 value:
+ *                   success: true
+ *                   hardDeleted: false
+ *               hardDelete:
+ *                 summary: Permanently deleted
+ *                 value:
+ *                   success: true
+ *                   hardDeleted: true
+ *       400:
+ *         description: Invalid request parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized - Missing or invalid authentication credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Forbidden - User is not a participant in this conversation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Conversation not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.delete(
+  '/:userId/conversations/:conversationId',
+  isAuthorized,
+  conversationIdValidator,
+  userIdValidator,
+  async (req: Request, res: Response) => {
+    try {
+      const { conversationId, userId } = req.params;
+      const result = await deleteConversationAction(
+        conversationId as string,
+        userId as string
+      );
       return res.status(200).json(result);
     } catch (error) {
       return getErrorResponseJson(error, res);
