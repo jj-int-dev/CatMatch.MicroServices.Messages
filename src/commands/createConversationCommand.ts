@@ -25,10 +25,6 @@ export async function createConversationCommand(
   animalId: string
 ): CreateConversationCommandResponse {
   try {
-    // Check if users exist and have correct user types
-    // Note: In a real implementation, we would check user types from the users table
-    // For now, we'll assume the validation happens at the action level
-
     // Check if conversation already exists between these users for this animal
     const existingConversations = await db
       .select()

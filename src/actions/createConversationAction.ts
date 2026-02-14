@@ -38,9 +38,6 @@ export async function createConversationAction(
     );
   }
 
-  // TODO: Validate that animalId belongs to rehomerId (if provided)
-  // This would require querying the animals table to check ownership
-
   const { success, data, errorMsg } = await createConversationCommand(
     adopterId,
     rehomerId,

@@ -81,7 +81,7 @@ export async function getMessagesCommand(
         m.read_at AS "readAt"
       FROM messages m
       WHERE m.conversation_id = ${conversationId}
-      ORDER BY m.created_at DESC
+      ORDER BY m.created_at ASC
       LIMIT ${pageSize} OFFSET ${offset};
     `);
 

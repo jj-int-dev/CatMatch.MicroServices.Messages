@@ -16,7 +16,7 @@ const swaggerOptions: Options = {
       }
     ]
   },
-  apis: ['**/*.ts'] // Paths to your JSDoc-commented TypeScript files
+  apis: ['**/*.ts'] // Paths to the JSDoc-commented TypeScript files
 };
 
 export default swaggerOptions;
