@@ -22,7 +22,6 @@ import {
   geometry
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { authUsers } from 'drizzle-orm/supabase';
 
 export const auth = pgSchema('auth');
 export const aalLevelInAuth = auth.enum('aal_level', ['aal1', 'aal2', 'aal3']);
@@ -726,39 +725,6 @@ export const usertypes = pgTable('usertypes', {
   userTypeId: uuid('user_type_id').defaultRandom().primaryKey().notNull()
 });
 
-export const users = pgTable(
-  'users',
-  {
-    email: varchar({ length: 100 }).notNull(),
-    phoneNumber: varchar('phone_number', { length: 100 }),
-    displayName: varchar('display_name', { length: 300 }),
-    createdAt: timestamp('created_at', {
-      withTimezone: true,
-      mode: 'string'
-    }).notNull(),
-    dateOfBirth: date('date_of_birth'),
-    avatarUrl: text('avatar_url'),
-    bio: text(),
-    gender: varchar(),
-    userId: uuid('user_id').defaultRandom().primaryKey().notNull(),
-    userTypeId: uuid('user_type_id').defaultRandom().notNull()
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.userId],
-      foreignColumns: [authUsers.id],
-      name: 'users_user_id_fkey'
-    })
-      .onUpdate('cascade')
-      .onDelete('cascade'),
-    foreignKey({
-      columns: [table.userTypeId],
-      foreignColumns: [usertypes.userTypeId],
-      name: 'users_user_type_id_fkey'
-    }).onUpdate('cascade')
-  ]
-);
-
 export const conversations = pgTable(
   'conversations',
   {
@@ -827,6 +793,13 @@ export const conversations = pgTable(
       table.adopterId.asc().nullsLast().op('uuid_ops'),
       table.lastMessageAt.desc().nullsLast().op('uuid_ops')
     ),
+    index('idx_conversations_adopter_deleted')
+      .using(
+        'btree',
+        table.adopterId.asc().nullsLast().op('timestamptz_ops'),
+        table.adopterDeletedAt.asc().nullsLast().op('timestamptz_ops')
+      )
+      .where(sql`(adopter_deleted_at IS NULL)`),
     index('idx_conversations_last_message').using(
       'btree',
       table.lastMessageAt.desc().nullsLast().op('timestamptz_ops'),
@@ -834,9 +807,16 @@ export const conversations = pgTable(
     ),
     index('idx_conversations_rehomer').using(
       'btree',
-      table.rehomerId.asc().nullsLast().op('uuid_ops'),
+      table.rehomerId.asc().nullsLast().op('timestamptz_ops'),
       table.lastMessageAt.desc().nullsLast().op('uuid_ops')
     ),
+    index('idx_conversations_rehomer_deleted')
+      .using(
+        'btree',
+        table.rehomerId.asc().nullsLast().op('timestamptz_ops'),
+        table.rehomerDeletedAt.asc().nullsLast().op('uuid_ops')
+      )
+      .where(sql`(rehomer_deleted_at IS NULL)`),
     index('idx_conversations_typing_status').using(
       'btree',
       table.adopterIsTyping.asc().nullsLast().op('bool_ops'),
@@ -859,6 +839,39 @@ export const conversations = pgTable(
       foreignColumns: [users.userId],
       name: 'fk_conversations_rehomerid__users'
     })
+  ]
+);
+
+export const users = pgTable(
+  'users',
+  {
+    email: varchar({ length: 100 }).notNull(),
+    phoneNumber: varchar('phone_number', { length: 100 }),
+    displayName: varchar('display_name', { length: 300 }),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+      mode: 'string'
+    }).notNull(),
+    dateOfBirth: date('date_of_birth'),
+    avatarUrl: text('avatar_url'),
+    bio: text(),
+    gender: varchar(),
+    userId: uuid('user_id').defaultRandom().primaryKey().notNull(),
+    userTypeId: uuid('user_type_id')
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [usersInAuth.id],
+      name: 'users_user_id_fkey'
+    })
+      .onUpdate('cascade')
+      .onDelete('cascade'),
+    foreignKey({
+      columns: [table.userTypeId],
+      foreignColumns: [usertypes.userTypeId],
+      name: 'users_user_type_id_fkey'
+    }).onUpdate('cascade')
   ]
 );
 
