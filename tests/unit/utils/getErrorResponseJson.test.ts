@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import getErrorResponseJson from '../../../src/utils/getErrorResponseJson';
 import HttpResponseError from '../../../src/dtos/httpResponseError';
 import type { Response } from 'express';

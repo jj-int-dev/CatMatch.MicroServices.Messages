@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { sendMessageValidator } from '../../../../src/validators/requests/sendMessageValidator';
 import type { Request, Response, NextFunction } from 'express';
 

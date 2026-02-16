@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import HttpResponseError from '../../../src/dtos/httpResponseError';
 
 describe('HttpResponseError', () => {

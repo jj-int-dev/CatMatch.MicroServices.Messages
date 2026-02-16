@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createConversationValidator } from '../../../../src/validators/requests/createConversationValidator';
 import type { Request, Response, NextFunction } from 'express';
 

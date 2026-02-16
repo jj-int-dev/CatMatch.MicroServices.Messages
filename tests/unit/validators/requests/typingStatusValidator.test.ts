@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { typingStatusValidator } from '../../../../src/validators/requests/typingStatusValidator';
 import type { Request, Response, NextFunction } from 'express';
 

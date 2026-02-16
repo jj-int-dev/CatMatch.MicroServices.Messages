@@ -2,7 +2,7 @@
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
     // File Layout
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
 
     // Environment Settings
@@ -26,9 +26,10 @@
     "noEmit": true, // or `emitDeclarationOnly`
     "allowImportingTsExtensions": true,
     "allowArbitraryExtensions": true,
-    "verbatimModuleSyntax": true, // or `isolatedModules
-    "skipLibCheck": true
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "types": ["vitest/globals"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules, "]
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules"]
 }

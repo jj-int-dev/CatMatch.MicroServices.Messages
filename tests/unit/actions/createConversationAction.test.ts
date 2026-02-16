@@ -1,5 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
 // Mock the command
 vi.mock('../../../src/commands/createConversationCommand', () => ({
   createConversationCommand: vi.fn()

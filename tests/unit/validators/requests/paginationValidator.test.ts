@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { paginationValidator } from '../../../../src/validators/requests/paginationValidator';
 import type { Request, Response, NextFunction } from 'express';
 
