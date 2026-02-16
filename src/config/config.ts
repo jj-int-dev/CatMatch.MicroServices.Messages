@@ -9,7 +9,7 @@ interface Config {
   SUPABASE_PUBLISHABLE_KEY: string;
   DATABASE_URL: string;
   DATABASE_INTROSPECT_URL: string;
-  AUTHORIZED_CALLER: string;
+  AUTHORIZED_CALLERS: string;
   CACHE_URL: string;
   CACHE_TOKEN: string;
 }
@@ -21,9 +21,9 @@ const config: Config = {
   SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY!,
   DATABASE_URL: process.env.DATABASE_URL!,
   DATABASE_INTROSPECT_URL: process.env.DATABASE_INTROSPECT_URL!,
-  AUTHORIZED_CALLER: process.env.AUTHORIZED_CALLER!,
+  AUTHORIZED_CALLERS: process.env.AUTHORIZED_CALLERS!,
   CACHE_URL: process.env.CACHE_URL!,
-  CACHE_TOKEN: process.env.CACHE_TOKEN!,
+  CACHE_TOKEN: process.env.CACHE_TOKEN!
 };
 
 export default config;

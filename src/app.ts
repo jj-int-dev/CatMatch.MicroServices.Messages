@@ -8,9 +8,13 @@ import swaggerUi from 'swagger-ui-express';
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
+    const authorizedCallers: string[] = config.AUTHORIZED_CALLERS.split(
+      ','
+    ).map((ac) => ac.toLowerCase());
+
     if (
       config.NODE_ENV === 'development' ||
-      origin?.toLowerCase().startsWith(config.AUTHORIZED_CALLER.toLowerCase())
+      authorizedCallers.some((ac) => origin?.toLowerCase().startsWith(ac))
     ) {
       callback(null, origin);
     } else {
